@@ -52,6 +52,7 @@ export async function POST(req) {
   // For this guide, log payload to console
   const { id } = evt?.data;
   const eventType = evt?.type;
+
   if (eventType === "user.created" || eventType === "user.updated") {
     const { first_name, last_name, image_url, email_addresses } = evt?.data;
     try {
@@ -81,16 +82,16 @@ export async function POST(req) {
     }
   }
 
-  return new Response("Webhook received", { status: 200 });
-}
-
-if (eventType === "user.deleted") {
-  try {
-    await deleteUser(id);
-  } catch (error) {
-    console.log("Error: Could not delete user:", error);
-    return new Response("Error: Could not delete user", {
-      status: 400,
-    });
+  if (eventType === "user.deleted") {
+    try {
+      await deleteUser(id);
+    } catch (error) {
+      console.log("Error: Could not delete user:", error);
+      return new Response("Error: Could not delete user", {
+        status: 400,
+      });
+    }
   }
+
+  return new Response("Webhook received", { status: 200 });
 }
