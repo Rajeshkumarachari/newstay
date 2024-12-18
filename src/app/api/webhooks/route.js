@@ -7,34 +7,31 @@ export async function POST(req) {
   const SIGNING_SECRET = process.env.SIGNING_SECRET;
 
   if (!SIGNING_SECRET) {
-    throw new Error(
-      "Error: Please add SIGNING_SECRET from Clerk Dashboard to .env or .env.local"
-    );
+    console.error("SIGNING_SECRET is not set in environment variables.");
+    return new Response("Error: Missing SIGNING_SECRET", { status: 500 });
   }
 
-  // Create new Svix instance with secret
   const wh = new Webhook(SIGNING_SECRET);
 
-  // Get headers
-  const headerPayload = await headers();
+  const headerPayload = headers();
   const svix_id = headerPayload.get("svix-id");
   const svix_timestamp = headerPayload.get("svix-timestamp");
   const svix_signature = headerPayload.get("svix-signature");
 
-  // If there are no headers, error out
   if (!svix_id || !svix_timestamp || !svix_signature) {
-    return new Response("Error: Missing Svix headers", {
-      status: 400,
+    console.error("Missing Svix headers:", {
+      svix_id,
+      svix_timestamp,
+      svix_signature,
     });
+    return new Response("Error: Missing Svix headers", { status: 400 });
   }
 
-  // Get body
   const payload = await req.json();
   const body = JSON.stringify(payload);
 
   let evt;
 
-  // Verify payload with headers
   try {
     evt = wh.verify(body, {
       "svix-id": svix_id,
@@ -42,14 +39,13 @@ export async function POST(req) {
       "svix-signature": svix_signature,
     });
   } catch (err) {
-    console.error("Error: Could not verify webhook:", err);
-    return new Response("Error: Verification error", {
-      status: 400,
-    });
+    console.error(
+      "Webhook verification failed. Check headers or SIGNING_SECRET.",
+      err
+    );
+    return new Response("Error: Verification error", { status: 400 });
   }
 
-  // Do something with payload
-  // For this guide, log payload to console
   const { id } = evt?.data;
   const eventType = evt?.type;
 
@@ -71,13 +67,13 @@ export async function POST(req) {
             },
           });
         } catch (error) {
-          console.log("Error: Could not update user metadata:", error);
+          console.error("Error updating user metadata:", error);
         }
       }
     } catch (error) {
-      console.log("Error: Could not create or update user:", error);
+      console.error("Error in createOrUpdateUser:", error.message || error);
       return new Response("Error: Could not create or update user", {
-        status: 400,
+        status: 500,
       });
     }
   }
@@ -86,10 +82,8 @@ export async function POST(req) {
     try {
       await deleteUser(id);
     } catch (error) {
-      console.log("Error: Could not delete user:", error);
-      new Response("Error: Could not delete user", {
-        status: 400,
-      });
+      console.error("Error deleting user:", error.message || error);
+      return new Response("Error: Could not delete user", { status: 500 });
     }
   }
 
