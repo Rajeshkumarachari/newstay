@@ -87,7 +87,7 @@ export async function POST(req) {
       await deleteUser(id);
     } catch (error) {
       console.log("Error: Could not delete user:", error);
-      return new Response("Error: Could not delete user", {
+      new Response("Error: Could not delete user", {
         status: 400,
       });
     }
