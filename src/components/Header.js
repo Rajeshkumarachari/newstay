@@ -1,6 +1,7 @@
 import { FaSearch } from "react-icons/fa";
 import Link from "next/link";
 import logo from "/public/bnb.png";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 
 export default function Header() {
@@ -34,11 +35,16 @@ export default function Header() {
               About
             </li>
           </Link>
-          <Link href="/sign-in">
-            <li className="hidden md:inline text-slate-700 hover:bg-gray-100 px-3 py-3 rounded-full">
-              Sign In
-            </li>
-          </Link>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+          <SignedOut className="">
+            <Link href="/sign-in">
+              <li className="hidden md:inline text-slate-700 hover:bg-gray-100 px-3 py-3 rounded-full">
+                Sign In
+              </li>
+            </Link>
+          </SignedOut>
         </ul>
       </div>
     </header>
